@@ -9,6 +9,10 @@ type Splitter interface {
 	Split(rd io.Reader, opts SplitOpts) <-chan Batch
 }
 
+type SplitterV2 interface {
+	Split(rd io.Reader, wr io.Writer, opts SplitOpts) error
+}
+
 type SplitOpts struct {
 	BatchSize int
 	FileName  string
@@ -52,4 +56,33 @@ func (sp *FileSplitter) Split(rd io.Reader, opts SplitOpts) <-chan Batch {
 		}
 	}()
 	return ch
+}
+
+type FileSplitterV2 struct {
+}
+
+func (sp *FileSplitterV2) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error {
+	if opts.BatchSize <= 0 {
+		return io.ErrShortBuffer
+	}
+
+	buf := bufio.NewReader(rd)
+	chunk := make([]byte, opts.BatchSize)
+
+	for {
+		n, err := buf.Read(chunk)
+		if n > 0 {
+			if _, writeErr := wr.Write(chunk[:n]); writeErr != nil {
+				return writeErr
+			}
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+	}
+
+	return nil
 }
