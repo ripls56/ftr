@@ -15,7 +15,12 @@ jobs:
         uses: apache/skywalking-eyes/header@v0.6.0
         with:
             mode: fix
-      - name: Apply Changes
-        uses: EndBug/add-and-commit@v9.1.4
+      - name: Create pull request with changes
+        uses: peter-evans/create-pull-request@v7
         with:
-          message: 'Automatic application of license header'
+          commit-message: 'Fix: Automatic application of license header'
+          branch: license-fix
+          title: 'Fix License Headers'
+          body: |
+            This pull request applies automatic fixes to license headers.
+          labels: license, automation
