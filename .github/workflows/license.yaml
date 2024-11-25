@@ -5,16 +5,10 @@ on:
 
 jobs:
   license:
-    permissions:
-      actions: write
-      pull-requests: write
-      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check Dependencies' License
         uses: apache/skywalking-eyes/dependency@v0.6.0
       - name: Fix License Header
@@ -24,6 +18,7 @@ jobs:
       - name: Create pull request with changes
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           commit-message: 'Fix: Automatic application of license header'
           branch: license-fix
           title: 'Fix License Headers'
