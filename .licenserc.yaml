@@ -6,6 +6,7 @@ header:
   paths-ignore:
     - '**/*.md'
     - 'LICENSE'
+    - 'go.sum'
     - '**/testdata/**'
 
   comment: on-failure
