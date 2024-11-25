@@ -9,7 +9,6 @@ jobs:
     steps:
       - name: Check Dependencies' License
         uses: apache/skywalking-eyes/dependency@0.6.0
-            config: .licenserc.yaml
       - name: Fix License Header
         uses: apache/skywalking-eyes/header@0.6.0
           with:
