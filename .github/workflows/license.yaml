@@ -4,7 +4,7 @@ on:
       - main
 
 jobs:
-  build:
+  license:
     runs-on: ubuntu-latest
     steps:
       - name: Check Dependencies' License
