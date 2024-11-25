@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check Dependencies' License
-        uses: apache/skywalking-eyes/dependency@0.6.0
+        uses: apache/skywalking-eyes/dependency@v0.6.0
       - name: Fix License Header
-        uses: apache/skywalking-eyes/header@0.6.0
+        uses: apache/skywalking-eyes/header@v0.6.0
         with:
             mode: fix
       - name: Apply Changes
