@@ -7,6 +7,8 @@ jobs:
   license:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Check Dependencies' License
         uses: apache/skywalking-eyes/dependency@v0.6.0
       - name: Fix License Header
