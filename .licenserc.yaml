@@ -6,6 +6,7 @@ header:
   paths-ignore:
     - '**/*.md'
     - 'LICENSE'
+    - '**/testdata/**'
 
   comment: on-failure
 
