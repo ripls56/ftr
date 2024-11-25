@@ -3,11 +3,13 @@ on:
     branches:
       - main
   
-permissions:
-  actions: write
+
 
 jobs:
   license:
+    permissions:
+      actions: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
