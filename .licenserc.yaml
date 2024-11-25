@@ -20,6 +20,7 @@ header:
   paths-ignore:
     - '**/*.md'
     - 'LICENSE'
+    - 'go.mod'
     - 'go.sum'
     - '**/testdata/**'
 
