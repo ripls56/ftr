@@ -19,11 +19,11 @@ import (
 	"io"
 )
 
-type Splitter interface {
+type Split interface {
 	Split(rd io.Reader, opts SplitOpts) <-chan Batch
 }
 
-type SplitterV2 interface {
+type SplitV2 interface {
 	Split(rd io.Reader, wr io.Writer, opts SplitOpts) error
 }
 

@@ -23,7 +23,7 @@ import (
 func BenchmarkSplit(b *testing.B) {
 	benchmarks := []struct {
 		name      string
-		splitter  Splitter
+		splitter  Split
 		filePath  string
 		batchSize int
 	}{
@@ -89,7 +89,7 @@ func BenchmarkSplit(b *testing.B) {
 func BenchmarkSplitV2(b *testing.B) {
 	benchmarks := []struct {
 		name      string
-		splitter  SplitterV2
+		splitter  SplitV2
 		filePath  string
 		batchSize int
 	}{

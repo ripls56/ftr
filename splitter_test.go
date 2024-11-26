@@ -25,7 +25,7 @@ import (
 func TestSplit(t *testing.T) {
 	tests := []struct {
 		name      string
-		splitter  Splitter
+		splitter  Split
 		filePath  string
 		batchSize int
 	}{
@@ -100,7 +100,7 @@ func TestSplit(t *testing.T) {
 func TestSplitV2(t *testing.T) {
 	tests := []struct {
 		name      string
-		splitter  SplitterV2
+		splitter  SplitV2
 		filePath  string
 		batchSize int
 	}{
