@@ -15,9 +15,12 @@
 package ftr
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkSplit(b *testing.B) {
@@ -40,10 +43,18 @@ func BenchmarkSplit(b *testing.B) {
 			batchSize: 5,
 		},
 		{
-			name:      "Small file",
-			splitter:  &FileSplitter{},
-			filePath:  "testdata/small.txt",
-			batchSize: 1000,
+			name:     "Small file",
+			splitter: &FileSplitter{},
+			filePath: "testdata/small.txt",
+			// 1 kbit
+			batchSize: 1 << 10,
+		},
+		{
+			name:     "Small file",
+			splitter: &FileSplitter{},
+			filePath: "testdata/small.txt",
+			// 0,5 kb
+			batchSize: 1 << 12,
 		},
 		{
 			name:      "Large jpg image",
@@ -51,25 +62,61 @@ func BenchmarkSplit(b *testing.B) {
 			filePath:  "testdata/large-img.jpg",
 			batchSize: 128,
 		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitter{},
+			filePath: "testdata/large-img.jpg",
+			// 0,5 kb
+			batchSize: 1 << 12,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitter{},
+			filePath: "testdata/large-img.jpg",
+			// 32 kb
+			batchSize: 1 << 18,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitter{},
+			filePath: "testdata/large-img.jpg",
+			// 128 kb
+			batchSize: 1 << 20,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitter{},
+			filePath: "testdata/large-img.jpg",
+			// 1 mbit
+			batchSize: 1 << 23,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitter{},
+			filePath: "testdata/large-img.jpg",
+			// 2 mb
+			batchSize: 1 << 24,
+		},
 	}
 
 	for _, bm := range benchmarks {
-		b.Run(bm.name, func(b *testing.B) {
+		name := fmt.Sprintf("%s batch size %d", bm.name, bm.batchSize)
+
+		b.Run(name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				file, err := os.Open(bm.filePath)
-				if err != nil {
-					b.Fatalf("Failed to open file: %v", err)
-				}
+				assert.NoError(b, err)
 				defer file.Close()
 
 				fileName := filepath.Base(bm.filePath)
 				outFile, err := os.CreateTemp(os.TempDir(), fileName)
-				if err != nil {
-					b.Fatalf("Failed to create temp file: %v", err)
-				}
+				assert.NoError(b, err)
+
 				defer outFile.Close()
 				defer os.Remove(outFile.Name())
 
+				origInfo, err := file.Stat()
+				assert.NoError(b, err)
 				ch := bm.splitter.Split(file, SplitOpts{
 					BatchSize: bm.batchSize,
 					FileName:  fileName,
@@ -77,10 +124,13 @@ func BenchmarkSplit(b *testing.B) {
 
 				for batch := range ch {
 					_, err := outFile.Write(batch.Content)
-					if err != nil {
-						b.Fatalf("Failed to write batch: %v", err)
-					}
+					assert.NoError(b, err)
 				}
+
+				outInfo, err := outFile.Stat()
+				assert.NoError(b, err)
+
+				assert.Equal(b, origInfo.Size(), outInfo.Size())
 			}
 		})
 	}
@@ -106,10 +156,19 @@ func BenchmarkSplitV2(b *testing.B) {
 			batchSize: 5,
 		},
 		{
-			name:      "Small file",
-			splitter:  &FileSplitterV2{},
-			filePath:  "testdata/small.txt",
-			batchSize: 1000,
+			name: "Small file",
+			// 1 kbit
+			splitter: &FileSplitterV2{},
+			filePath: "testdata/small.txt",
+			// 1 kbit
+			batchSize: 1 << 10,
+		},
+		{
+			name:     "Small file",
+			splitter: &FileSplitterV2{},
+			filePath: "testdata/small.txt",
+			// 0,5 kb
+			batchSize: 1 << 12,
 		},
 		{
 			name:      "Large jpg image",
@@ -117,32 +176,71 @@ func BenchmarkSplitV2(b *testing.B) {
 			filePath:  "testdata/large-img.jpg",
 			batchSize: 128,
 		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitterV2{},
+			filePath: "testdata/large-img.jpg",
+			// 0,5 kb
+			batchSize: 1 << 12,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitterV2{},
+			filePath: "testdata/large-img.jpg",
+			// 32 kb
+			batchSize: 1 << 18,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitterV2{},
+			filePath: "testdata/large-img.jpg",
+			// 128 kb
+			batchSize: 1 << 20,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitterV2{},
+			filePath: "testdata/large-img.jpg",
+			// 1 mbit
+			batchSize: 1 << 23,
+		},
+		{
+			name:     "Large jpg image",
+			splitter: &FileSplitterV2{},
+			filePath: "testdata/large-img.jpg",
+			// 2 mb
+			batchSize: 1 << 24,
+		},
 	}
 
 	for _, bm := range benchmarks {
-		b.Run(bm.name, func(b *testing.B) {
+		name := fmt.Sprintf("%s batch size %d", bm.name, bm.batchSize)
+
+		b.Run(name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				file, err := os.Open(bm.filePath)
-				if err != nil {
-					b.Fatalf("Failed to open file: %v", err)
-				}
+				assert.NoError(b, err)
 				defer file.Close()
 
 				fileName := filepath.Base(bm.filePath)
 				outFile, err := os.CreateTemp(os.TempDir(), fileName)
-				if err != nil {
-					b.Fatalf("Failed to create temp file: %v", err)
-				}
+				assert.NoError(b, err)
+
 				defer outFile.Close()
 				defer os.Remove(outFile.Name())
 
+				origInfo, err := file.Stat()
+				assert.NoError(b, err)
 				err = bm.splitter.Split(file, outFile, SplitOpts{
 					BatchSize: bm.batchSize,
 					FileName:  fileName,
 				})
-				if err != nil {
-					b.Fatalf("Failed to split file: %v", err)
-				}
+				assert.NoError(b, err)
+
+				outInfo, err := outFile.Stat()
+				assert.NoError(b, err)
+
+				assert.Equal(b, origInfo.Size(), outInfo.Size())
 			}
 		})
 	}
