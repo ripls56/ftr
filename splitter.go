@@ -60,10 +60,10 @@ func (sp *FileSplitter) Split(rd io.Reader, opts SplitOpts) <-chan Batch {
 			}
 
 			ch <- Batch{
-				Id: id,
-				Meta: FileMeta{
-					FileName: opts.FileName,
-				},
+				Meta: *NewMeta(FileMetaOpts{
+					Path:    opts.FileName,
+					BatchID: uint32(id),
+				}),
 				Content: chunk[:n],
 			}
 			id++
