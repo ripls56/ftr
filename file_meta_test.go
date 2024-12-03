@@ -26,9 +26,9 @@ func TestFileMeta_Serialize(t *testing.T) {
 			},
 			want: func() []byte {
 				var buf bytes.Buffer
-				_ = binary.Write(&buf, binary.BigEndian, uint16(len("testdata/small.txt")))
-				_ = binary.Write(&buf, binary.BigEndian, []rune("testdata/small.txt"))
-				_ = binary.Write(&buf, binary.BigEndian, uint32(1))
+				_ = binary.Write(&buf, binary.LittleEndian, uint16(len("testdata/small.txt")))
+				_ = binary.Write(&buf, binary.LittleEndian, []rune("testdata/small.txt"))
+				_ = binary.Write(&buf, binary.LittleEndian, uint32(1))
 				return buf.Bytes()
 			}(),
 			wantErr: false,
@@ -41,8 +41,8 @@ func TestFileMeta_Serialize(t *testing.T) {
 			},
 			want: func() []byte {
 				var buf bytes.Buffer
-				_ = binary.Write(&buf, binary.BigEndian, uint16(0))
-				_ = binary.Write(&buf, binary.BigEndian, uint32(123))
+				_ = binary.Write(&buf, binary.LittleEndian, uint16(0))
+				_ = binary.Write(&buf, binary.LittleEndian, uint32(123))
 				return buf.Bytes()
 			}(),
 			wantErr: false,
@@ -56,9 +56,9 @@ func TestFileMeta_Serialize(t *testing.T) {
 			want: func() []byte {
 				var buf bytes.Buffer
 				path := "a/very/long/path/to/some/file/that/keeps/going.and.have.a.very.long.ext"
-				_ = binary.Write(&buf, binary.BigEndian, uint16(len(path)))
-				_ = binary.Write(&buf, binary.BigEndian, []rune(path))
-				_ = binary.Write(&buf, binary.BigEndian, uint32(42))
+				_ = binary.Write(&buf, binary.LittleEndian, uint16(len(path)))
+				_ = binary.Write(&buf, binary.LittleEndian, []rune(path))
+				_ = binary.Write(&buf, binary.LittleEndian, uint32(42))
 				return buf.Bytes()
 			}(),
 			wantErr: false,
@@ -70,13 +70,13 @@ func TestFileMeta_Serialize(t *testing.T) {
 				path:    tt.fields.path,
 				batchID: tt.fields.batchID,
 			}
-			got, err := fm.Serialize()
+			meta, err := fm.Serialize()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FileMeta.Serialize() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FileMeta.Serialize() = %b, want %b", got, tt.want)
+			if !reflect.DeepEqual(meta, tt.want) {
+				t.Errorf("FileMeta.Serialize() = %b, want %b", meta, tt.want)
 			}
 		})
 	}
@@ -93,9 +93,9 @@ func TestFileMeta_Deserialize(t *testing.T) {
 			name: "Valid data",
 			data: func() []byte {
 				var buf bytes.Buffer
-				_ = binary.Write(&buf, binary.BigEndian, uint16(len("testdata/small.txt")))
-				_ = binary.Write(&buf, binary.BigEndian, []rune("testdata/small.txt"))
-				_ = binary.Write(&buf, binary.BigEndian, uint32(1))
+				_ = binary.Write(&buf, binary.LittleEndian, uint16(len("testdata/small.txt")))
+				_ = binary.Write(&buf, binary.LittleEndian, []rune("testdata/small.txt"))
+				_ = binary.Write(&buf, binary.LittleEndian, uint32(1))
 				return buf.Bytes()
 			}(),
 			want: &FileMeta{
@@ -114,8 +114,8 @@ func TestFileMeta_Deserialize(t *testing.T) {
 			name: "Corrupted data",
 			data: func() []byte {
 				var buf bytes.Buffer
-				_ = binary.Write(&buf, binary.BigEndian, uint16(5))
-				_ = binary.Write(&buf, binary.BigEndian, []rune("ab"))
+				_ = binary.Write(&buf, binary.LittleEndian, uint16(5))
+				_ = binary.Write(&buf, binary.LittleEndian, []rune("ab"))
 				return buf.Bytes()
 			}(),
 			want:    nil,
@@ -126,13 +126,15 @@ func TestFileMeta_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			meta := &FileMeta{}
-			got, err := meta.Deserialize(tt.data)
+			var buf bytes.Buffer
+			buf.Write(tt.data)
+			err := meta.Deserialize(&buf)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FileMeta.Deserialize() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.want != nil && (got.path != tt.want.path || got.batchID != tt.want.batchID) {
-				t.Errorf("FileMeta.Deserialize() = %v, want %v", got, tt.want)
+			if tt.want != nil && (meta.path != tt.want.path || meta.batchID != tt.want.batchID) {
+				t.Errorf("FileMeta.Deserialize() = %v, want %v", meta, tt.want)
 			}
 		})
 	}
@@ -178,15 +180,18 @@ func TestFileMeta_SerializeAndDeserialize(t *testing.T) {
 				return
 			}
 
+			var buf bytes.Buffer
+			buf.Write(serialized)
+
 			meta := &FileMeta{}
-			deserialized, err := meta.Deserialize(serialized)
+			err = meta.Deserialize(&buf)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FileMeta.Deserialize() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			t.Logf("data: \n%+v\n%+v", tt.meta, deserialized)
-			if tt.meta.path != deserialized.path || tt.meta.batchID != deserialized.batchID {
-				t.Errorf("Serialize and Deserialize mismatch: got = %v, want = %v", deserialized, tt.meta)
+			t.Logf("data: \n%+v\n%+v", tt.meta, meta)
+			if tt.meta.path != meta.path || tt.meta.batchID != meta.batchID {
+				t.Errorf("Serialize and Deserialize mismatch: meta = %v, want = %v", meta, tt.meta)
 			}
 		})
 	}

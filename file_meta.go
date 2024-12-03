@@ -18,7 +18,7 @@ type Serialize interface {
 }
 
 type Deserialize interface {
-	Deserialize(data []byte) (*FileMeta, error)
+	Deserialize(rd io.Reader) error
 }
 
 type FileMetaOpts struct {
@@ -33,36 +33,30 @@ func NewMeta(opts FileMetaOpts) *FileMeta {
 	}
 }
 
-func (fm *FileMeta) Deserialize(data []byte) (*FileMeta, error) {
-	if len(data) <= 0 {
-		return nil, errors.New("deserialize: buffer is empty")
-	}
-	buf := bytes.NewReader(data)
-	meta := &FileMeta{}
-
-	path, err := readPath(buf)
+func (fm *FileMeta) Deserialize(rd io.Reader) error {
+	path, err := readPath(rd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	meta.path = path
+	fm.path = path
 
-	if err := binary.Read(buf, binary.BigEndian, &meta.batchID); err != nil {
-		return nil, err
+	if err := binary.Read(rd, binary.LittleEndian, &fm.batchID); err != nil {
+		return err
 	}
 
-	return meta, nil
+	return nil
 }
 
-func readPath(buf io.Reader) (string, error) {
+func readPath(rd io.Reader) (string, error) {
 	var pathLen uint16
-	if err := binary.Read(buf, binary.BigEndian, &pathLen); err != nil {
+	if err := binary.Read(rd, binary.LittleEndian, &pathLen); err != nil {
 		if !errors.Is(err, io.EOF) {
 			return "", err
 		}
 	}
 
 	path := make([]rune, pathLen)
-	if err := binary.Read(buf, binary.BigEndian, path); err != nil {
+	if err := binary.Read(rd, binary.LittleEndian, path); err != nil {
 		if !errors.Is(err, io.EOF) {
 			return "", err
 		}
@@ -74,13 +68,13 @@ func readPath(buf io.Reader) (string, error) {
 func (fm *FileMeta) Serialize() ([]byte, error) {
 	var buf bytes.Buffer
 	runes := []rune(fm.path)
-	if err := binary.Write(&buf, binary.BigEndian, uint16(len(runes))); err != nil {
+	if err := binary.Write(&buf, binary.LittleEndian, uint16(len(runes))); err != nil {
 		return nil, err
 	}
-	if err := binary.Write(&buf, binary.BigEndian, runes); err != nil {
+	if err := binary.Write(&buf, binary.LittleEndian, runes); err != nil {
 		return nil, err
 	}
-	if err := binary.Write(&buf, binary.BigEndian, fm.batchID); err != nil {
+	if err := binary.Write(&buf, binary.LittleEndian, fm.batchID); err != nil {
 		return nil, err
 	}
 
