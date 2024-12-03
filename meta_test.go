@@ -66,7 +66,7 @@ func TestFileMeta_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fm := &FileMeta{
+			fm := &Metadata{
 				path:    tt.fields.path,
 				batchID: tt.fields.batchID,
 			}
@@ -86,7 +86,7 @@ func TestFileMeta_Deserialize(t *testing.T) {
 	tests := []struct {
 		name    string
 		data    []byte
-		want    *FileMeta
+		want    *Metadata
 		wantErr bool
 	}{
 		{
@@ -98,7 +98,7 @@ func TestFileMeta_Deserialize(t *testing.T) {
 				_ = binary.Write(&buf, binary.LittleEndian, uint32(1))
 				return buf.Bytes()
 			}(),
-			want: &FileMeta{
+			want: &Metadata{
 				path:    "testdata/small.txt",
 				batchID: 1,
 			},
@@ -125,7 +125,7 @@ func TestFileMeta_Deserialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			meta := &FileMeta{}
+			meta := &Metadata{}
 			var buf bytes.Buffer
 			buf.Write(tt.data)
 			err := meta.Deserialize(&buf)
@@ -143,12 +143,12 @@ func TestFileMeta_Deserialize(t *testing.T) {
 func TestFileMeta_SerializeAndDeserialize(t *testing.T) {
 	tests := []struct {
 		name    string
-		meta    *FileMeta
+		meta    *Metadata
 		wantErr bool
 	}{
 		{
 			name: "Valid data",
-			meta: &FileMeta{
+			meta: &Metadata{
 				path:    "testdata/small.txt",
 				batchID: 123,
 			},
@@ -156,7 +156,7 @@ func TestFileMeta_SerializeAndDeserialize(t *testing.T) {
 		},
 		{
 			name: "Empty path",
-			meta: &FileMeta{
+			meta: &Metadata{
 				path:    "",
 				batchID: 456,
 			},
@@ -164,7 +164,7 @@ func TestFileMeta_SerializeAndDeserialize(t *testing.T) {
 		},
 		{
 			name: "Long path",
-			meta: &FileMeta{
+			meta: &Metadata{
 				path:    "a/very/long/path/to/some/file/that/keeps/going.and.have.a.very.long.ext",
 				batchID: 789,
 			},
@@ -183,7 +183,7 @@ func TestFileMeta_SerializeAndDeserialize(t *testing.T) {
 			var buf bytes.Buffer
 			buf.Write(serialized)
 
-			meta := &FileMeta{}
+			meta := &Metadata{}
 			err = meta.Deserialize(&buf)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FileMeta.Deserialize() error = %v, wantErr %v", err, tt.wantErr)

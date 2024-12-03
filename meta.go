@@ -7,8 +7,7 @@ import (
 	"io"
 )
 
-// FileMeta
-type FileMeta struct {
+type Metadata struct {
 	path    string
 	batchID uint32
 }
@@ -21,19 +20,19 @@ type Deserialize interface {
 	Deserialize(rd io.Reader) error
 }
 
-type FileMetaOpts struct {
+type MetaOpts struct {
 	Path    string
 	BatchID uint32
 }
 
-func NewMeta(opts FileMetaOpts) *FileMeta {
-	return &FileMeta{
+func NewMetadata(opts MetaOpts) *Metadata {
+	return &Metadata{
 		path:    opts.Path,
 		batchID: opts.BatchID,
 	}
 }
 
-func (fm *FileMeta) Deserialize(rd io.Reader) error {
+func (fm *Metadata) Deserialize(rd io.Reader) error {
 	path, err := readPath(rd)
 	if err != nil {
 		return err
@@ -65,7 +64,7 @@ func readPath(rd io.Reader) (string, error) {
 	return string(path), nil
 }
 
-func (fm *FileMeta) Serialize() ([]byte, error) {
+func (fm *Metadata) Serialize() ([]byte, error) {
 	var buf bytes.Buffer
 	runes := []rune(fm.path)
 	if err := binary.Write(&buf, binary.LittleEndian, uint16(len(runes))); err != nil {
