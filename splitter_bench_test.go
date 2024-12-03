@@ -16,11 +16,18 @@ package ftr
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	_        = iota
+	KB int64 = 1 << (10 * iota)
+	MB
 )
 
 func BenchmarkSplit(b *testing.B) {
@@ -43,19 +50,22 @@ func BenchmarkSplit(b *testing.B) {
 			batchSize: 5,
 		},
 		{
-			name: "Small file",
-			// 1 kbit
-			splitter: &FileSplitter{},
-			filePath: "testdata/small.txt",
-			// 1 kbit
-			batchSize: 1 << 10,
+			name:      "Small file",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/small.txt",
+			batchSize: int(KB),
 		},
 		{
-			name:     "Small file",
-			splitter: &FileSplitter{},
-			filePath: "testdata/small.txt",
-			// 0,5 kb
-			batchSize: 1 << 12,
+			name:      "Small file",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/small.txt",
+			batchSize: int(4 * KB),
+		},
+		{
+			name:      "Small file",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/small.txt",
+			batchSize: int(32 * KB),
 		},
 		{
 			name:      "Large jpg image",
@@ -64,39 +74,70 @@ func BenchmarkSplit(b *testing.B) {
 			batchSize: 128,
 		},
 		{
-			name:     "Large jpg image",
-			splitter: &FileSplitter{},
-			filePath: "testdata/large-img.jpg",
-			// 0,5 kb
-			batchSize: 1 << 12,
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(KB),
 		},
 		{
-			name:     "Large jpg image",
-			splitter: &FileSplitter{},
-			filePath: "testdata/large-img.jpg",
-			// 32 kb
-			batchSize: 1 << 18,
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(4 * KB),
 		},
 		{
-			name:     "Large jpg image",
-			splitter: &FileSplitter{},
-			filePath: "testdata/large-img.jpg",
-			// 128 kb
-			batchSize: 1 << 20,
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(16 * KB),
 		},
 		{
-			name:     "Large jpg image",
-			splitter: &FileSplitter{},
-			filePath: "testdata/large-img.jpg",
-			// 1 mbit
-			batchSize: 1 << 23,
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(32 * KB),
 		},
 		{
-			name:     "Large jpg image",
-			splitter: &FileSplitter{},
-			filePath: "testdata/large-img.jpg",
-			// 2 mb
-			batchSize: 1 << 24,
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(64 * KB),
+		},
+		{
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(256 * KB),
+		},
+		{
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(MB),
+		},
+		{
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(2 * MB),
+		},
+		{
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(4 * MB),
+		},
+		{
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(8 * MB),
+		},
+		{
+			name:      "Large jpg image",
+			splitter:  &FileSplitter{},
+			filePath:  "testdata/large-img.jpg",
+			batchSize: int(16 * MB),
 		},
 	}
 
@@ -104,6 +145,9 @@ func BenchmarkSplit(b *testing.B) {
 		name := fmt.Sprintf("%s batch size %d", bm.name, bm.batchSize)
 
 		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				file, err := os.Open(bm.filePath)
 				assert.NoError(b, err)
@@ -118,8 +162,13 @@ func BenchmarkSplit(b *testing.B) {
 
 				origInfo, err := file.Stat()
 				assert.NoError(b, err)
-				err = bm.splitter.Split(file, outFile, bm.batchSize)
-				assert.NoError(b, err)
+				err = bm.splitter.Split(file, outFile, SplitOpts{
+					BatchSize: bm.batchSize,
+					Filepath:  bm.filePath,
+				})
+				if err != io.EOF {
+					assert.NoError(b, err)
+				}
 
 				outInfo, err := outFile.Stat()
 				assert.NoError(b, err)

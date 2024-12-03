@@ -15,39 +15,50 @@
 package ftr
 
 import (
-	"bufio"
 	"io"
 )
 
 type Split interface {
-	Split(rd io.Reader, wr io.Writer, batchSize int) error
+	Split(rd io.Reader, wr io.Writer, opts SplitOpts) error
 }
 
-type FileSplitter struct {
+type SplitOpts struct {
+	BatchSize int
+	Filepath  string
 }
 
-func (sp *FileSplitter) Split(rd io.Reader, wr io.Writer, batchSize int) error {
-	if batchSize <= 0 {
+type FileSplitter struct{}
+
+func NewFileSplitter(ser Serialize) Split {
+	return &FileSplitter{}
+}
+
+func (sp *FileSplitter) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error {
+	if opts.BatchSize <= 0 {
 		return io.ErrShortBuffer
 	}
 
-	buf := bufio.NewReader(rd)
-	chunk := make([]byte, batchSize)
+	batch := make([]byte, opts.BatchSize)
 
-	for {
-		n, err := buf.Read(chunk)
-		if n > 0 {
-			if _, writeErr := wr.Write(chunk[:n]); writeErr != nil {
-				return writeErr
+	errCh := make(chan error)
+	go func() {
+		for {
+			n, err := rd.Read(batch)
+			if err != nil {
+				errCh <- err
 			}
-		}
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
-		}
-	}
 
-	return nil
+			if n > 0 {
+				// TODO: write metadata first
+				if _, err := wr.Write(batch[:n]); err != nil {
+					errCh <- err
+				}
+				continue
+			}
+
+			errCh <- io.EOF
+		}
+	}()
+
+	return <-errCh
 }
