@@ -20,68 +20,19 @@ import (
 )
 
 type Split interface {
-	Split(rd io.Reader, opts SplitOpts) <-chan Batch
-}
-
-type SplitV2 interface {
-	Split(rd io.Reader, wr io.Writer, opts SplitOpts) error
-}
-
-type SplitOpts struct {
-	BatchSize int
-	FileName  string
+	Split(rd io.Reader, wr io.Writer, batchSize int) error
 }
 
 type FileSplitter struct {
 }
 
-func (sp *FileSplitter) Split(rd io.Reader, opts SplitOpts) <-chan Batch {
-	ch := make(chan Batch)
-
-	if opts.BatchSize <= 0 {
-		panic("split: batch size should be greater then zero")
-	}
-	go func() {
-		defer close(ch)
-
-		buf := bufio.NewReader(rd)
-
-		id := 1
-
-		for {
-			chunk := make([]byte, opts.BatchSize)
-			n, err := buf.Read(chunk)
-
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				panic(err)
-			}
-
-			ch <- Batch{
-				Meta: *NewMeta(FileMetaOpts{
-					Path:    opts.FileName,
-					BatchID: uint32(id),
-				}),
-				Content: chunk[:n],
-			}
-			id++
-		}
-	}()
-	return ch
-}
-
-type FileSplitterV2 struct {
-}
-
-func (sp *FileSplitterV2) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error {
-	if opts.BatchSize <= 0 {
+func (sp *FileSplitter) Split(rd io.Reader, wr io.Writer, batchSize int) error {
+	if batchSize <= 0 {
 		return io.ErrShortBuffer
 	}
 
 	buf := bufio.NewReader(rd)
-	chunk := make([]byte, opts.BatchSize)
+	chunk := make([]byte, batchSize)
 
 	for {
 		n, err := buf.Read(chunk)
