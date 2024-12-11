@@ -164,7 +164,7 @@ func BenchmarkSplit(b *testing.B) {
 				assert.NoError(b, err)
 				err = bm.splitter.Split(file, outFile, SplitOpts{
 					BatchSize: bm.batchSize,
-					Filepath:  bm.filePath,
+					FilePath:  bm.filePath,
 				})
 				if err != io.EOF {
 					assert.NoError(b, err)

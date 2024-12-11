@@ -24,7 +24,7 @@ type Split interface {
 
 type SplitOpts struct {
 	BatchSize int
-	Filepath  string
+	FilePath  string
 }
 
 type Splitter struct{}
@@ -49,7 +49,7 @@ func (sp *Splitter) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error {
 
 			if n > 0 {
 				meta := Metadata{
-					path:    opts.Filepath,
+					path:    opts.FilePath,
 					batchID: uint32(n),
 				}
 				serialized, err := meta.Serialize()
