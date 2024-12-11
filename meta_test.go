@@ -128,7 +128,7 @@ func TestFileMeta_Deserialize(t *testing.T) {
 			meta := &Metadata{}
 			var buf bytes.Buffer
 			buf.Write(tt.data)
-			err := meta.Deserialize(&buf)
+			meta, err := Deserialize(&buf)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FileMeta.Deserialize() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -183,8 +183,7 @@ func TestFileMeta_SerializeAndDeserialize(t *testing.T) {
 			var buf bytes.Buffer
 			buf.Write(serialized)
 
-			meta := &Metadata{}
-			err = meta.Deserialize(&buf)
+			meta, err := Deserialize(&buf)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FileMeta.Deserialize() error = %v, wantErr %v", err, tt.wantErr)
 				return

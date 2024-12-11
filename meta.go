@@ -12,14 +12,6 @@ type Metadata struct {
 	batchID uint32
 }
 
-type Serialize interface {
-	Serialize() ([]byte, error)
-}
-
-type Deserialize interface {
-	Deserialize(rd io.Reader) error
-}
-
 type MetaOpts struct {
 	Path    string
 	BatchID uint32
@@ -32,18 +24,20 @@ func NewMetadata(opts MetaOpts) *Metadata {
 	}
 }
 
-func (fm *Metadata) Deserialize(rd io.Reader) error {
+func Deserialize(rd io.Reader) (*Metadata, error) {
 	path, err := readPath(rd)
 	if err != nil {
-		return err
-	}
-	fm.path = path
-
-	if err := binary.Read(rd, binary.LittleEndian, &fm.batchID); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	metadata := Metadata{}
+	metadata.path = path
+
+	if err := binary.Read(rd, binary.LittleEndian, &metadata.batchID); err != nil {
+		return nil, err
+	}
+
+	return &metadata, nil
 }
 
 func readPath(rd io.Reader) (string, error) {
