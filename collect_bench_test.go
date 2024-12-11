@@ -49,10 +49,10 @@ func BenchmarkCollect(b *testing.B) {
 			defer file.Close()
 
 			var buf bytes.Buffer
-			splitter := FileSplitterV2{}
+			splitter := Splitter{}
 			err = splitter.Split(file, &buf, SplitOpts{
 				BatchSize: bm.batchSize,
-				FileName:  filepath.Base(bm.filePath),
+				FilePath:  filepath.Base(bm.filePath),
 			})
 			assert.NoError(b, err)
 
@@ -60,7 +60,7 @@ func BenchmarkCollect(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				err = bm.collector.Collect(&buf, CollectOpts{
 					BatchSize: bm.batchSize,
-					FileName:  file.Name(),
+					FilePath:  file.Name(),
 				})
 				assert.NoError(b, err)
 			}

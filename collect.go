@@ -11,7 +11,7 @@ type Collect interface {
 
 type CollectOpts struct {
 	BatchSize int
-	FileName  string
+	FilePath  string
 }
 
 type FileCollector struct {
@@ -23,7 +23,7 @@ func (co *FileCollector) Collect(rd io.Reader, opts CollectOpts) error {
 		return io.ErrShortBuffer
 	}
 
-	file, err := os.Create(opts.FileName)
+	file, err := os.Create(opts.FilePath)
 	if err != nil {
 		return err
 	}
