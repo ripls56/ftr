@@ -27,13 +27,9 @@ type SplitOpts struct {
 	Filepath  string
 }
 
-type FileSplitter struct{}
+type Splitter struct{}
 
-func NewFileSplitter(ser Serialize) Split {
-	return &FileSplitter{}
-}
-
-func (sp *FileSplitter) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error {
+func (sp *Splitter) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error {
 	if opts.BatchSize <= 0 {
 		return io.ErrShortBuffer
 	}
@@ -41,6 +37,9 @@ func (sp *FileSplitter) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error 
 	batch := make([]byte, opts.BatchSize)
 
 	errCh := make(chan error)
+	batchID := 0
+
+	// This goroutine here for future realizitaions of Split
 	go func() {
 		for {
 			n, err := rd.Read(batch)
@@ -49,10 +48,31 @@ func (sp *FileSplitter) Split(rd io.Reader, wr io.Writer, opts SplitOpts) error 
 			}
 
 			if n > 0 {
-				// TODO: write metadata first
+				meta := Metadata{
+					path:    opts.Filepath,
+					batchID: uint32(n),
+				}
+				serialized, err := meta.Serialize()
+				if err != nil {
+					errCh <- err
+				}
+
+				if _, err := wr.Write(serialized); err != nil {
+					errCh <- err
+				}
 				if _, err := wr.Write(batch[:n]); err != nil {
 					errCh <- err
 				}
+				if _, err := wr.Write([]byte{
+					0x00,
+					0x00,
+					0x00,
+					0x00,
+				}); err != nil {
+					errCh <- err
+				}
+
+				batchID++
 				continue
 			}
 
