@@ -45,34 +45,17 @@ func (tp *TcpPool) Init() error {
 }
 
 func (tp *TcpPool) Write(p []byte) (n int, err error) {
-	type result struct {
-		N   int
-		Err error
-	}
-	resCh := make(chan result)
-
-	go func() {
-		conn := <-tp.pool
-		defer func() {
-			tp.pool <- conn
-		}()
-
-		n, err = conn.Write(p)
-		if err != nil {
-			resCh <- result{
-				N:   n,
-				Err: err,
-			}
-		}
-
-		resCh <- result{
-			N:   n,
-			Err: nil,
-		}
+	conn := <-tp.pool
+	defer func() {
+		tp.pool <- conn
 	}()
 
-	res := <-resCh
-	return res.N, res.Err
+	n, err = conn.Write(p)
+	if err != nil {
+		return n, err
+	}
+
+	return n, err
 }
 
 func (tp *TcpPool) Close() {
