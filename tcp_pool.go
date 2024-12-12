@@ -12,24 +12,39 @@ type TcpPool struct {
 	address string
 }
 
-type TcpPoolOpts struct {
-	PoolSize int
-	Network  string
-	Address  string
+type TcpPoolOpts func(*TcpPool)
+
+func WithPoolSize(size int) TcpPoolOpts {
+	return func(tp *TcpPool) {
+		if size <= 0 {
+			panic("tcp pool: pool size should be greater then zero")
+		}
+
+		tp.n = size
+	}
 }
 
-func NewTcpPool(opts TcpPoolOpts) *TcpPool {
-	if opts.PoolSize <= 0 {
-		panic("tcp pool: pool size should be greater then zero")
+func WithAddress(address string) TcpPoolOpts {
+	return func(tp *TcpPool) {
+		tp.address = address
+	}
+}
+
+func NewTcpPool(opts ...TcpPoolOpts) *TcpPool {
+	tcpPool := TcpPool{
+		n:       5,
+		network: "tcp",
+		address: ":8080",
 	}
 
-	pool := make(chan net.Conn, opts.PoolSize)
-	return &TcpPool{
-		n:       opts.PoolSize,
-		pool:    pool,
-		network: opts.Network,
-		address: opts.Address,
+	for _, opt := range opts {
+		opt(&tcpPool)
 	}
+
+	pool := make(chan net.Conn, tcpPool.n)
+	tcpPool.pool = pool
+
+	return &tcpPool
 }
 
 func (tp *TcpPool) Init() error {
